@@ -187,9 +187,9 @@ func (s *LabelService) FindResourceLabels(ctx context.Context, filter influxdb.L
 	return labels, nil
 }
 
-// CreateLabel checks to see if the authorizer on context has read access to the new label's org.
+// CreateLabel checks to see if the authorizer on context has write access to the new label's org.
 func (s *LabelService) CreateLabel(ctx context.Context, l *influxdb.Label) error {
-	if err := authorizeReadOrg(ctx, l.OrgID); err != nil {
+	if err := authorizeWriteOrg(ctx, l.OrgID); err != nil {
 		return err
 	}
 
@@ -200,6 +200,9 @@ func (s *LabelService) CreateLabel(ctx context.Context, l *influxdb.Label) error
 func (s *LabelService) CreateLabelMapping(ctx context.Context, m *influxdb.LabelMapping) error {
 	l, err := s.s.FindLabelByID(ctx, m.LabelID)
 	if err != nil {
+		return err
+	}
+	if err := authorizeWriteOrg(ctx, l.OrgID); err != nil {
 		return err
 	}
 
