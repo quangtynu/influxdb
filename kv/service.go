@@ -114,6 +114,10 @@ type AutoMigrationStore interface {
 
 // Initialize creates Buckets needed.
 func (s *Service) Initialize(ctx context.Context) error {
+	if err := s.Migrator.Initialize(ctx, s.kv); err != nil {
+		return err
+	}
+
 	if store, ok := s.kv.(AutoMigrationStore); ok && store.AutoMigrate() {
 		return s.Migrator.Up(ctx, s.kv)
 	}
