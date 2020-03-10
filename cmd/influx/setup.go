@@ -47,7 +47,7 @@ func setupF(cmd *cobra.Command, args []string) error {
 
 	// check if setup is allowed
 	s := &http.SetupService{
-		Addr:               flags.host,
+		Addr:               flags.Host,
 		InsecureSkipVerify: flags.skipVerify,
 	}
 
@@ -56,10 +56,10 @@ func setupF(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to determine if instance has been configured: %v", err)
 	}
 	if !allowed {
-		return fmt.Errorf("instance at %q has already been setup", flags.host)
+		return fmt.Errorf("instance at %q has already been setup", flags.Host)
 	}
 
-	dPath, dir, err := defaultTokenPath()
+	dPath, dir, err := defaultConfigPath()
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func setupF(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to setup instance: %v", err)
 	}
 
-	err = writeTokenToPath(result.Auth.Token, dPath, dir)
+	err = writeConfigToPath(result.Auth.Token, result.Org.Name, dPath, dir)
 	if err != nil {
 		return fmt.Errorf("failed to write token to path %q: %v", dPath, err)
 	}
