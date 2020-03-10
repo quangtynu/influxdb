@@ -145,7 +145,9 @@ export const loadBuckets = () => async (
   dispatch: Dispatch<Action | ReturnType<typeof selectBucket>>,
   getState: GetState
 ) => {
-  const orgID = getOrg(getState()).id
+  const state = getState()
+
+  const orgID = getOrg(state).id
 
   dispatch(setBuilderBucketsStatus(RemoteDataState.Loading))
 
@@ -162,7 +164,7 @@ export const loadBuckets = () => async (
     const userBuckets = allBuckets.filter(b => !b.startsWith('_'))
     const buckets = [...userBuckets, ...systemBuckets]
 
-    const selectedBucket = getActiveQuery(getState()).builderConfig.buckets[0]
+    const selectedBucket = getActiveQuery(state).builderConfig.buckets[0]
 
     dispatch(setBuilderBuckets(buckets))
 
@@ -193,27 +195,32 @@ export const loadTagSelector = (index: number) => async (
   dispatch: Dispatch<Action | ReturnType<typeof loadTagSelectorValues>>,
   getState: GetState
 ) => {
-  const {buckets, tags} = getActiveQuery(getState()).builderConfig
+  const state = getState()
+  const {buckets, tags} = getActiveQuery(state).builderConfig
 
   if (!tags[index] || !buckets[0]) {
     return
   }
-
-  const tagsSelections = tags.slice(0, index)
-  const queryURL = getState().links.query.self
-  const orgID = getOrg(getState()).id
-
   dispatch(setBuilderTagKeysStatus(index, RemoteDataState.Loading))
 
+  const tagsSelections = tags.slice(0, index)
+  const queryURL = state.links.query.self
+
+  const bucket = buckets[0]
+
+  const allBuckets = getAll<Bucket>(state, ResourceType.Buckets)
+  const foundBucket = allBuckets.find(b => b.name === bucket)
+  const orgID = foundBucket ? foundBucket.orgID : getOrg(state).id
+
   try {
-    const timeRange = getTimeRange(getState())
-    const searchTerm = getActiveTimeMachine(getState()).queryBuilder.tags[index]
+    const timeRange = getTimeRange(state)
+    const searchTerm = getActiveTimeMachine(state).queryBuilder.tags[index]
       .keysSearchTerm
 
     const keys = await queryBuilderFetcher.findKeys(index, {
       url: queryURL,
       orgID,
-      bucket: buckets[0],
+      bucket,
       tagsSelections,
       searchTerm,
       timeRange,
@@ -257,24 +264,29 @@ const loadTagSelectorValues = (index: number) => async (
   const {buckets, tags} = getActiveQuery(state).builderConfig
   const tagsSelections = tags.slice(0, index)
   const queryURL = state.links.query.self
-  const orgID = getOrg(getState()).id
 
   if (!buckets[0]) {
     return
   }
 
+  const bucket = buckets[0]
+
+  const allBuckets = getAll<Bucket>(state, ResourceType.Buckets)
+  const foundBucket = allBuckets.find(b => b.name === bucket)
+  const orgID = foundBucket ? foundBucket.orgID : getOrg(state).id
+
   dispatch(setBuilderTagValuesStatus(index, RemoteDataState.Loading))
 
   try {
-    const timeRange = getTimeRange(getState())
-    const key = getActiveQuery(getState()).builderConfig.tags[index].key
-    const searchTerm = getActiveTimeMachine(getState()).queryBuilder.tags[index]
+    const timeRange = getTimeRange(state)
+    const key = getActiveQuery(state).builderConfig.tags[index].key
+    const searchTerm = getActiveTimeMachine(state).queryBuilder.tags[index]
       .valuesSearchTerm
 
     const values = await queryBuilderFetcher.findValues(index, {
       url: queryURL,
       orgID,
-      bucket: buckets[0],
+      bucket,
       tagsSelections,
       key,
       searchTerm,
